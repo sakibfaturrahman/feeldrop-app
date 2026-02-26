@@ -1,26 +1,88 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  SendHorizontal,
-  Music,
-  User,
-  MessageCircle,
-  AlertCircle,
-  Sparkles,
-  Search,
-  X,
-} from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
+import { API_BASE_URL } from "@/config";
+import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Card, CardContent } from "@/components/ui/card";
-import { API_BASE_URL } from "@/config";
-import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import {
+  User,
+  MessageCircle,
+  Music,
+  Sparkles,
+  X,
+  SendHorizontal,
+  AlertCircle,
+  Search,
+  CheckCircle2,
+  XCircle,
+  Star,
+} from "lucide-react";
+
+// --- KOMPONEN ORNAMEN BACKGROUND ---
+const BackgroundOrnaments = () => {
+  // Partikel acak untuk efek debu/bintang halus
+  const particles = Array.from({ length: 12 });
+
+  return (
+    <div className="absolute inset-0 pointer-events-none overflow-hidden -z-10">
+      {/* Soft Gradient Glows */}
+      <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-zinc-50 rounded-full blur-[120px] opacity-60" />
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-zinc-100 rounded-full blur-[100px] opacity-40" />
+
+      {/* Animated Floating Particles */}
+      {particles.map((_, i) => (
+        <motion.div
+          key={i}
+          initial={{
+            x: Math.random() * 100 + "%",
+            y: Math.random() * 100 + "%",
+            opacity: Math.random() * 0.3,
+          }}
+          animate={{
+            y: ["-10%", "110%"],
+            opacity: [0, 0.3, 0],
+          }}
+          transition={{
+            duration: Math.random() * 20 + 20,
+            repeat: Infinity,
+            ease: "linear",
+            delay: Math.random() * 10,
+          }}
+          className="absolute w-1 h-1 bg-zinc-300 rounded-full blur-[1px]"
+        />
+      ))}
+
+      {/* Decorative Lines/Ornaments */}
+      <div className="absolute top-[20%] right-[15%] w-64 h-64 border border-zinc-100/50 rounded-full" />
+      <div className="absolute top-[18%] right-[13%] w-72 h-72 border border-zinc-50/30 rounded-full" />
+      <div className="absolute bottom-[10%] left-[10%] w-px h-64 bg-gradient-to-t from-zinc-200/50 to-transparent" />
+      <div className="absolute top-[40%] left-[5%] flex flex-col gap-4">
+        <div className="w-1 h-1 rounded-full bg-zinc-100" />
+        <div className="w-1 h-1 rounded-full bg-zinc-100" />
+        <div className="w-1 h-1 rounded-full bg-zinc-100" />
+      </div>
+    </div>
+  );
+};
 
 const SubmitMessage = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
+  const [showDropdown, setShowDropdown] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+
+  // State untuk Modals & Notifications
   const [showQuotaModal, setShowQuotaModal] = useState(true);
+  const [notification, setNotification] = useState<{
+    type: "success" | "error" | null;
+    message: string;
+  }>({
+    type: null,
+    message: "",
+  });
 
   const [formData, setFormData] = useState({
     to: "",
@@ -29,39 +91,18 @@ const SubmitMessage = () => {
     songTitle: "",
   });
 
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-  const [showDropdown, setShowDropdown] = useState(false);
-
-  // Mengambil rekomendasi default dari backend saat komponen dimuat
   useEffect(() => {
-    fetchDefaultRecommendations();
+    fetchSongs("");
   }, []);
 
-  const fetchDefaultRecommendations = async () => {
-    try {
-      // Sesuai logic backend: jika query kosong, return default list
-      const res = await fetch(`${API_BASE_URL}/api/search-song?q=`);
-      const data = await res.json();
-      setSearchResults(data.results || []);
-    } catch (err) {
-      console.error("error fetching defaults:", err);
-    }
-  };
-
-  const handleSongSearch = async (query: string) => {
-    if (query.trim() === "") {
-      fetchDefaultRecommendations();
-      return;
-    }
-
+  const fetchSongs = async (query: string) => {
     setIsSearching(true);
     try {
       const res = await fetch(`${API_BASE_URL}/api/search-song?q=${query}`);
       const data = await res.json();
       setSearchResults(data.results || []);
     } catch (err) {
-      console.error("error searching song:", err);
+      console.error("search error:", err);
     } finally {
       setIsSearching(false);
     }
@@ -69,6 +110,11 @@ const SubmitMessage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!formData.song) {
+      setNotification({ type: "error", message: "please select a song first" });
+      return;
+    }
+
     setLoading(true);
     try {
       const res = await fetch(`${API_BASE_URL}/kirim`, {
@@ -77,57 +123,67 @@ const SubmitMessage = () => {
         body: JSON.stringify({
           to: formData.to,
           message: formData.message,
-          song: formData.song, // URL spotify
+          song: formData.song,
         }),
       });
 
       if (res.ok) {
-        navigate("/");
+        const result = await res.json();
+        const newId = result.data._id;
+        navigate(`/menfess/${newId}`);
+      } else {
+        const result = await res.json();
+        setNotification({
+          type: "error",
+          message: result.error || "failed to send message",
+        });
       }
     } catch (err) {
-      console.error(err);
+      setNotification({
+        type: "error",
+        message: "connection error. check your server",
+      });
     } finally {
       setLoading(false);
+      setTimeout(() => setNotification({ type: null, message: "" }), 4000);
     }
   };
 
   return (
     <div className="min-h-screen bg-white py-24 px-6 relative overflow-hidden font-sans">
-      {/* Soft Background Ornaments */}
-      <div className="absolute top-0 left-0 w-full h-full pointer-events-none -z-10">
-        <div className="absolute top-[15%] right-[10%] w-72 h-72 border border-zinc-50 rounded-full" />
-        <div className="absolute bottom-[20%] left-[5%] w-px h-48 bg-gradient-to-b from-zinc-100 to-transparent" />
-      </div>
+      {/* Noise Texture Background */}
+      <div
+        className="absolute inset-0 pointer-events-none -z-10 opacity-30"
+        style={{
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
+        }}
+      ></div>
+
+      {/* New Smooth Ornaments & Particles */}
+      <BackgroundOrnaments />
 
       <div className="max-w-xl mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full border border-zinc-100 bg-zinc-50/50 text-[11px] text-zinc-400 font-medium mb-6 lowercase tracking-tight">
-            <Sparkles className="w-3 h-3" /> craft your secret message
-          </div>
-          <h1 className="text-4xl font-medium text-zinc-900 mb-4 tracking-tighter lowercase">
+        <div className="text-center mb-12">
+          <h1 className="text-4xl font-medium text-zinc-900 mb-4 lowercase tracking-tighter">
             spill your feelings.
           </h1>
-          <p className="text-zinc-400 text-sm lowercase font-normal">
-            sometimes a song says it better than words could.
+          <p className="text-zinc-400 text-sm lowercase">
+            let the song speak for you.
           </p>
-        </motion.div>
+        </div>
 
-        <Card className="border-zinc-100 shadow-[0_20px_50px_-20px_rgba(0,0,0,0.04)] rounded-[3rem] bg-white relative">
-          <CardContent className="p-10 sm:p-14">
-            <form onSubmit={handleSubmit} className="space-y-10">
-              {/* Field: To */}
-              <div className="space-y-3">
-                <label className="text-[11px] font-medium text-zinc-300 lowercase tracking-[0.2em] flex items-center gap-2 px-1">
-                  <User className="w-3.5 h-3.5 stroke-[1.5]" /> recipient:
+        <Card className="rounded-[2.5rem] border-zinc-100 shadow-none bg-zinc-50/30 overflow-visible relative">
+          <CardContent className="p-10">
+            <form onSubmit={handleSubmit} className="space-y-8">
+              {/* To */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-medium text-zinc-400 lowercase flex items-center gap-2 px-1">
+                  <User size={14} /> to:
                 </label>
                 <Input
                   required
-                  placeholder="who is this for?"
-                  className="rounded-2xl border-zinc-100 bg-zinc-50/30 py-7 focus:bg-white focus:ring-0 focus:border-zinc-300 transition-all lowercase placeholder:text-zinc-300 shadow-none"
+                  className="rounded-2xl border-zinc-100 bg-white py-6 focus:ring-0 lowercase shadow-none placeholder:text-zinc-200"
+                  placeholder="enter name..."
                   value={formData.to}
                   onChange={(e) =>
                     setFormData({ ...formData, to: e.target.value })
@@ -135,16 +191,15 @@ const SubmitMessage = () => {
                 />
               </div>
 
-              {/* Field: Message */}
-              <div className="space-y-3">
-                <label className="text-[11px] font-medium text-zinc-300 lowercase tracking-[0.2em] flex items-center gap-2 px-1">
-                  <MessageCircle className="w-3.5 h-3.5 stroke-[1.5]" />{" "}
-                  message:
+              {/* Message */}
+              <div className="space-y-2">
+                <label className="text-[11px] font-medium text-zinc-400 lowercase flex items-center gap-2 px-1">
+                  <MessageCircle size={14} /> message:
                 </label>
                 <Textarea
                   required
-                  placeholder="write what's on your mind..."
-                  className="rounded-[2rem] border-zinc-100 bg-zinc-50/30 min-h-[160px] focus:bg-white focus:ring-0 focus:border-zinc-300 transition-all resize-none p-6 lowercase placeholder:text-zinc-300 shadow-none"
+                  className="rounded-2xl border-zinc-100 bg-white min-h-[120px] focus:ring-0 lowercase resize-none shadow-none placeholder:text-zinc-200"
+                  placeholder="write your secret..."
                   value={formData.message}
                   onChange={(e) =>
                     setFormData({ ...formData, message: e.target.value })
@@ -152,145 +207,186 @@ const SubmitMessage = () => {
                 />
               </div>
 
-              {/* Field: Song Search */}
-              <div className="space-y-3 relative">
-                <label className="text-[11px] font-medium text-zinc-300 lowercase tracking-[0.2em] flex items-center gap-2 px-1">
-                  <Music className="w-3.5 h-3.5 stroke-[1.5]" />{" "}
-                  {formData.songTitle ? "attached song:" : "pick a melody:"}
+              {/* Song Search */}
+              <div className="space-y-2 relative">
+                <label className="text-[11px] font-medium text-zinc-400 lowercase flex items-center gap-2 px-1">
+                  <Music size={14} /> song:
                 </label>
 
                 {formData.songTitle ? (
                   <motion.div
-                    initial={{ scale: 0.98, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    className="flex items-center justify-between p-4 rounded-2xl border border-zinc-900 bg-zinc-900 text-white transition-all shadow-lg shadow-zinc-200"
+                    initial={{ scale: 0.95 }}
+                    animate={{ scale: 1 }}
+                    className="flex items-center justify-between p-4 bg-zinc-900 text-white rounded-2xl"
                   >
-                    <div className="flex items-center gap-3 overflow-hidden px-1">
-                      <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center animate-pulse">
-                        <Music className="w-4 h-4 text-white" />
-                      </div>
-                      <span className="text-[13px] truncate lowercase font-medium">
-                        {formData.songTitle}
-                      </span>
-                    </div>
+                    <span className="text-xs truncate lowercase flex-1 px-1">
+                      {formData.songTitle}
+                    </span>
                     <button
                       type="button"
                       onClick={() =>
                         setFormData({ ...formData, song: "", songTitle: "" })
                       }
-                      className="p-2 hover:bg-white/10 rounded-full transition-colors"
+                      className="hover:opacity-70 transition-opacity"
                     >
-                      <X className="w-4 h-4" />
+                      <X size={16} />
                     </button>
                   </motion.div>
                 ) : (
                   <div className="relative group">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-300" />
+                    <Search
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-300 pointer-events-none"
+                      size={16}
+                    />
                     <Input
-                      required
-                      placeholder="search for a song on spotify..."
                       onFocus={() => setShowDropdown(true)}
-                      className="rounded-2xl border-zinc-100 bg-zinc-50/30 pl-12 py-7 focus:bg-white focus:ring-0 focus:border-zinc-300 transition-all lowercase placeholder:text-zinc-300 shadow-none"
-                      onChange={(e) => handleSongSearch(e.target.value)}
+                      onChange={(e) => fetchSongs(e.target.value)}
+                      className="rounded-2xl border-zinc-100 bg-white pl-12 py-6 focus:ring-0 lowercase shadow-none placeholder:text-zinc-200"
+                      placeholder="search on spotify..."
                     />
                   </div>
                 )}
 
-                {/* Dropdown Results & Recommendations */}
                 <AnimatePresence>
                   {showDropdown && !formData.song && (
                     <motion.div
-                      initial={{ opacity: 0, y: 8 }}
+                      initial={{ opacity: 0, y: 10 }}
                       animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: 8 }}
-                      className="absolute z-50 w-full mt-3 bg-white border border-zinc-100 rounded-[2rem] shadow-[0_15px_40px_-15px_rgba(0,0,0,0.1)] max-h-[320px] overflow-y-auto p-3 scrollbar-hide"
+                      exit={{ opacity: 0 }}
+                      className="absolute z-50 w-full mt-2 bg-white border border-zinc-100 rounded-3xl shadow-[0_10px_40px_-10px_rgba(0,0,0,0.1)] max-h-60 overflow-y-auto p-2"
                     >
-                      <div className="flex items-center justify-between px-4 py-2 mb-2">
-                        <p className="text-[10px] text-zinc-300 font-bold lowercase tracking-widest">
-                          {isSearching ? "searching..." : "curated for you"}
-                        </p>
-                        {!isSearching && (
-                          <Sparkles className="w-3 h-3 text-zinc-200" />
-                        )}
-                      </div>
-
-                      <div className="space-y-1">
-                        {searchResults.map((song: any) => (
-                          <div
-                            key={song.id}
-                            onClick={() => {
-                              setFormData({
-                                ...formData,
-                                song: `http://googleusercontent.com/open.spotify.com/track/${song.id}`,
-                                songTitle: song.text,
-                              });
-                              setShowDropdown(false);
-                            }}
-                            className="flex items-center gap-4 p-3 hover:bg-zinc-50 rounded-[1.25rem] cursor-pointer transition-all group"
-                          >
-                            <img
-                              src={song.coverUrl}
-                              className="w-11 h-11 rounded-xl object-cover grayscale-[0.3] group-hover:grayscale-0 transition-all duration-500 shadow-sm"
-                            />
-                            <div className="flex flex-col overflow-hidden">
-                              <p className="text-[13px] font-medium text-zinc-800 truncate lowercase group-hover:text-black">
-                                {song.text.split(" - ")[0]}
-                              </p>
-                              <p className="text-[11px] text-zinc-400 lowercase truncate font-normal">
-                                {song.text.split(" - ")[1] || "spotify artist"}
-                              </p>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
+                      {searchResults.map((song: any) => (
+                        <div
+                          key={song.id}
+                          onClick={() => {
+                            setFormData({
+                              ...formData,
+                              song: song.id,
+                              songTitle: song.text,
+                            });
+                            setShowDropdown(false);
+                          }}
+                          className="flex items-center gap-3 p-3 hover:bg-zinc-50 rounded-2xl cursor-pointer transition-colors"
+                        >
+                          <img
+                            src={song.coverUrl}
+                            className="w-10 h-10 rounded-lg object-cover grayscale-[0.2]"
+                            alt="cover"
+                          />
+                          <span className="text-xs text-zinc-600 truncate lowercase">
+                            {song.text}
+                          </span>
+                        </div>
+                      ))}
                     </motion.div>
                   )}
                 </AnimatePresence>
               </div>
 
               <Button
-                disabled={loading || !formData.song}
-                className="w-full py-8 rounded-[2rem] bg-zinc-900 hover:bg-zinc-800 text-white font-medium shadow-none transition-all active:scale-[0.98] flex gap-3 lowercase mt-4"
+                disabled={loading}
+                className="w-full py-7 rounded-2xl bg-zinc-900 text-white hover:bg-zinc-800 transition-all lowercase shadow-none font-normal relative overflow-hidden"
               >
-                {loading ? "delivering your message..." : "send message"}
-                <SendHorizontal className="w-4 h-4" />
+                {loading ? (
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                    <span>delivering...</span>
+                  </div>
+                ) : (
+                  "send story"
+                )}
               </Button>
             </form>
+
+            {/* --- STATUS NOTIFICATION OVERLAY --- */}
+            <AnimatePresence>
+              {notification.type && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.9 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="absolute inset-0 z-10 flex items-center justify-center p-6 bg-zinc-50/90 backdrop-blur-sm rounded-[2.5rem]"
+                >
+                  <div className="text-center flex flex-col items-center">
+                    {notification.type === "success" ? (
+                      <CheckCircle2
+                        className="w-12 h-12 text-zinc-900 mb-4 animate-bounce"
+                        strokeWidth={1.5}
+                      />
+                    ) : (
+                      <XCircle
+                        className="w-12 h-12 text-zinc-400 mb-4"
+                        strokeWidth={1.5}
+                      />
+                    )}
+                    <p
+                      className={`text-sm font-medium lowercase tracking-tight ${notification.type === "success" ? "text-zinc-900" : "text-zinc-500"}`}
+                    >
+                      {notification.message}
+                    </p>
+                    {notification.type === "success" && (
+                      <p className="text-[10px] text-zinc-400 mt-2 lowercase">
+                        redirecting to feed...
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </CardContent>
         </Card>
       </div>
 
-      {/* --- QUOTA MODAL --- */}
+      {/* --- MODAL ATTENTION & LIMIT --- */}
       <AnimatePresence>
         {showQuotaModal && (
-          <div className="fixed inset-0 z-[60] flex items-center justify-center p-6">
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-6">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowQuotaModal(false)}
-              className="absolute inset-0 bg-white/40 backdrop-blur-md"
+              className="absolute inset-0 bg-white/60 backdrop-blur-md"
             />
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="relative bg-white rounded-[3rem] p-10 max-w-sm w-full shadow-[0_30px_60px_-15px_rgba(0,0,0,0.1)] text-center border border-zinc-100"
+              className="relative bg-white rounded-[3rem] p-10 max-w-sm w-full shadow-[0_20px_50px_-20px_rgba(0,0,0,0.1)] text-center border border-zinc-100"
             >
               <div className="w-14 h-14 bg-zinc-50 border border-zinc-100 rounded-full flex items-center justify-center mx-auto mb-8">
                 <AlertCircle className="w-5 h-5 text-zinc-400 stroke-[1.5]" />
               </div>
               <h2 className="text-xl font-medium text-zinc-900 mb-4 tracking-tight lowercase">
-                daily limit reached?
+                before you spill...
               </h2>
-              <p className="text-zinc-400 text-[14px] mb-10 leading-relaxed lowercase font-normal">
-                to keep this space sincere, we limit shared stories to{" "}
-                <span className="text-zinc-900 font-medium">3 messages</span>{" "}
-                per day. use them wisely.
-              </p>
+              <div className="text-zinc-400 text-[14px] mb-8 leading-relaxed lowercase font-normal space-y-3">
+                <p>
+                  once your message is sent,{" "}
+                  <span className="text-zinc-900 font-medium">
+                    it cannot be deleted
+                  </span>
+                  . please check your words twice.
+                </p>
+
+                <div className="pt-4 border-t border-zinc-50 flex flex-col items-center gap-2">
+                  <div className="flex gap-1 text-zinc-200">
+                    <Star size={10} fill="currentColor" />
+                    <Star size={10} fill="currentColor" />
+                    <Star size={10} fill="currentColor" />
+                  </div>
+                  <p className="text-[11px] italic text-zinc-300">
+                    * daily limit: you can send up to{" "}
+                    <span className="text-zinc-500 font-medium">
+                      3 messages
+                    </span>{" "}
+                    per day.
+                  </p>
+                </div>
+              </div>
               <Button
                 onClick={() => setShowQuotaModal(false)}
-                className="w-full py-6 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-medium lowercase shadow-none transition-all border-none"
+                className="w-full py-6 rounded-2xl bg-zinc-900 hover:bg-zinc-800 text-white font-normal lowercase shadow-none transition-all"
               >
                 i understand
               </Button>

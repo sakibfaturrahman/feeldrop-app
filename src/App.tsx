@@ -1,4 +1,10 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  useLocation,
+} from "react-router-dom";
+import { useEffect } from "react";
 import Navbar from "@/components/layout/navbar";
 import Footer from "@/components/layout/footer";
 import Hero from "@/components/home/hero";
@@ -6,40 +12,49 @@ import { MessageMarqueeSection as MessageLoop } from "@/components/home/messageL
 import Features from "@/components/home/features";
 import BrowseMessages from "@/components/menfess/browseMessages";
 import DetailMenfess from "@/components/menfess/detailMenfess";
-import SubmitMessage from "@/components/menfess/submitMessage"; // Import komponen baru
+import SubmitMessage from "@/components/menfess/submitMessage";
 
-// Halaman Utama: Gabungan Hero, Loop Pesan, dan Fitur
-const HomePage = () => {
-  return (
-    <>
-      <Hero />
-      <MessageLoop />
-      <Features />
-    </>
-  );
+// --- HELPER: SCROLL TO TOP ---
+// Mengatur agar setiap perpindahan route, scroll otomatis kembali ke atas
+const ScrollToTop = () => {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+  return null;
 };
 
+// --- PAGE: HOME ---
+const HomePage = () => (
+  <>
+    <Hero />
+    <MessageLoop />
+    <Features />
+  </>
+);
+
+// --- COMPONENT: MAIN APP ---
 function App() {
   return (
     <Router>
-      {/* Menggunakan min-screen agar footer selalu di bawah pada laptop Redmibook kamu */}
-      <div className="relative min-h-screen flex flex-col bg-white">
+      <ScrollToTop />
+
+      {/* Container utama dengan min-h-screen untuk menjaga posisi Footer di Redmibook kamu */}
+      <div className="relative min-h-screen flex flex-col bg-white antialiased">
         <Navbar />
 
-        {/* Konten Utama dengan Routing Dinamis */}
-        <main className="flex-grow pt-16">
+        {/* Main Content Area */}
+        <main className="flex-grow pt-12">
+          {" "}
+          {/* pt-16 agar konten tidak tertutup navbar fixed */}
           <Routes>
-            {/* Halaman Landing */}
             <Route path="/" element={<HomePage />} />
-
-            {/* Halaman Jelajahi Pesan (Browse) */}
             <Route path="/browse-message" element={<BrowseMessages />} />
-
-            {/* Halaman Kirim Pesan (Submit) - Placeholder sudah diganti */}
             <Route path="/message" element={<SubmitMessage />} />
-
-            {/* Halaman Detail Pesan berdasarkan ID dari MongoDB */}
             <Route path="/menfess/:id" element={<DetailMenfess />} />
+
+            {/* Fallback jika route tidak ditemukan */}
+            <Route path="*" element={<HomePage />} />
           </Routes>
         </main>
 
