@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
-import { Search, Music, Calendar, ArrowRight, Sparkles } from "lucide-react";
+import { Search, Calendar, ArrowRight } from "lucide-react";
 import { API_BASE_URL } from "@/config";
 import type { Menfess } from "@/types/menfess";
 

@@ -1,7 +1,6 @@
-import React from "react";
 import { motion, type Variants } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Music, Search, SendHorizontal, Sparkles } from "lucide-react";
+import { Search, SendHorizontal } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const HeroSection = () => {
