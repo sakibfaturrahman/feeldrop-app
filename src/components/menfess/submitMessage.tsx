@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { API_BASE_URL } from "@/config";
@@ -70,7 +70,7 @@ const SubmitMessage = () => {
   const [loading, setLoading] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
+  const [, setIsSearching] = useState(false);
 
   // State untuk Modals & Notifications
   const [showQuotaModal, setShowQuotaModal] = useState(true);

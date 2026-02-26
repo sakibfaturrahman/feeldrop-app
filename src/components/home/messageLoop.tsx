@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from "react";
-import { motion, useAnimationControls } from "framer-motion";
+import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { Card } from "@/components/ui/card";
 import { API_BASE_URL } from "@/config";
 import { Link } from "react-router-dom"; // Tambahkan Link agar bisa diklik

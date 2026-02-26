@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Send, Search, Sparkles } from "lucide-react";
+import { Menu, X, Send, Search } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 
 const Navbar = () => {

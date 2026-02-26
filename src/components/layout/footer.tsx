@@ -1,4 +1,3 @@
-import React from "react";
 import { Github, Instagram, Globe, Heart } from "lucide-react";
 import { motion } from "framer-motion";
 
