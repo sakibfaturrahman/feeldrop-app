@@ -15,22 +15,22 @@ const Footer = () => {
     },
     {
       icon: <Globe className="w-4 h-4 stroke-[1.5]" />,
-      href: "https://ftrtech.web.id",
+      href: "https://sakibdev.my.id",
     },
   ];
 
   return (
-    <footer className="bg-white border-t border-zinc-100 pt-24 pb-12 relative overflow-hidden">
+    <footer className="relative pt-24 pb-12 overflow-hidden bg-white border-t border-zinc-100">
       {/* Soft Ornaments */}
       <div className="absolute top-0 right-[10%] w-px h-full bg-gradient-to-b from-zinc-100 via-transparent to-transparent opacity-50" />
-      <div className="absolute top-20 left-0 w-24 h-24 border border-zinc-50 rounded-full -ml-12 opacity-50" />
+      <div className="absolute left-0 w-24 h-24 -ml-12 border rounded-full opacity-50 top-20 border-zinc-50" />
 
-      <div className="max-w-6xl mx-auto px-6">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-16 mb-24">
+      <div className="max-w-6xl px-6 mx-auto">
+        <div className="grid grid-cols-1 gap-16 mb-24 md:grid-cols-12">
           {/* Brand Section */}
-          <div className="md:col-span-5 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 md:col-span-5">
             <div className="flex flex-col gap-2">
-              <h2 className="text-xl font-medium tracking-tight text-zinc-900 lowercase">
+              <h2 className="text-xl font-medium tracking-tight lowercase text-zinc-900">
                 feeldrop.
               </h2>
               <div className="w-8 h-0.5 bg-zinc-900 rounded-full" />
@@ -50,7 +50,7 @@ const Footer = () => {
                   }}
                   href={social.href}
                   target="_blank"
-                  className="p-3 rounded-full border border-zinc-100 text-zinc-400 hover:text-zinc-900 transition-all duration-500"
+                  className="p-3 transition-all duration-500 border rounded-full border-zinc-100 text-zinc-400 hover:text-zinc-900"
                 >
                   {social.icon}
                 </motion.a>
@@ -62,7 +62,7 @@ const Footer = () => {
           <div className="hidden md:block md:col-span-1"></div>
 
           {/* Quick Links */}
-          <div className="md:col-span-3 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 md:col-span-3">
             <h3 className="text-[11px] font-medium tracking-[0.2em] text-zinc-300 lowercase">
               navigation
             </h3>
@@ -71,8 +71,8 @@ const Footer = () => {
                 (item) => (
                   <a
                     key={item}
-                    href="#"
-                    className="text-sm text-zinc-400 hover:text-zinc-900 transition-all duration-300 w-fit font-normal lowercase"
+                    href="https://sakibdev.my.id"
+                    className="text-sm font-normal lowercase transition-all duration-300 text-zinc-400 hover:text-zinc-900 w-fit"
                   >
                     {item}
                   </a>
@@ -82,17 +82,17 @@ const Footer = () => {
           </div>
 
           {/* Inspiration Section */}
-          <div className="md:col-span-3 flex flex-col gap-6">
+          <div className="flex flex-col gap-6 md:col-span-3">
             <h3 className="text-[11px] font-medium tracking-[0.2em] text-zinc-300 lowercase">
               acknowledgements
             </h3>
             <div className="flex flex-col gap-4">
-              <p className="text-sm text-zinc-400 font-normal leading-relaxed lowercase">
+              <p className="text-sm font-normal leading-relaxed lowercase text-zinc-400">
                 inspired by the soul of{" "}
                 <a
                   href="https://sendthesong.xyz"
                   target="_blank"
-                  className="text-zinc-900 border-b border-zinc-100 hover:border-zinc-900 transition-colors"
+                  className="transition-colors border-b text-zinc-900 border-zinc-100 hover:border-zinc-900"
                 >
                   sendthesong.xyz
                 </a>
@@ -108,7 +108,7 @@ const Footer = () => {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-10 border-t border-zinc-50 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="flex flex-col items-center justify-between gap-6 pt-10 border-t border-zinc-50 md:flex-row">
           <div className="text-[11px] text-zinc-300 font-medium tracking-widest lowercase">
             © {currentYear} feeldrop. all rights reserved.
           </div>
@@ -116,7 +116,7 @@ const Footer = () => {
           <div className="flex items-center gap-2 text-[11px] text-zinc-400 font-medium lowercase">
             crafted with{" "}
             <Heart className="w-3 h-3 text-zinc-200 fill-zinc-200" /> by
-            <span className="text-zinc-900 underline underline-offset-4 decoration-zinc-100">
+            <span className="underline text-zinc-900 underline-offset-4 decoration-zinc-100">
               sakib faturrahman
             </span>
           </div>
